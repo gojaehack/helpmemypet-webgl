@@ -8,15 +8,61 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Help Me! My Pet!">
-    <meta name="theme-color" content="#FFF6E5">
+    <meta name="theme-color" content="#53d7fd">
     <title>Help Me! My Pet!</title>
+    <!--
+      HTML loader = a copy of the game's own loading screen (Loading Graphics.prefab, 1080x1920
+      reference, CanvasScaler matched to width) so the hand-over to Unity is invisible:
+      same background (aspect-fill), same title logo rect, same "Loading.." text + fill bar.
+      Assets in loader/ are exported by tools/make_loader_assets.py; redeploy.sh replaces the
+      ?a= token with a hash of loader/ (cache-bust separate from the four Build/WebGL.* refs).
+    -->
+    <link rel="preload" as="image" href="loader/bg.webp?a=2f22de869e" fetchpriority="high">
+    <link rel="preload" as="font" type="font/woff2" href="loader/fredoka.woff2?a=2f22de869e" crossorigin>
+    <script>
+      // Same language rule as the game's first start (system language): ko* -> Korean, else English.
+      // (The game also remembers a language picked in Settings in PlayerPrefs; JS can't read that.)
+      (function () {
+        var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+        var ko = /^ko\b/i.test(String(langs[0] || ""));
+        window.__loaderLang = ko ? "ko" : "en";
+        document.documentElement.lang = window.__loaderLang;
+        function preload(href, as, type) {
+          var l = document.createElement("link");
+          l.rel = "preload"; l.as = as; l.href = href;
+          if (type) { l.type = type; l.crossOrigin = "anonymous"; }
+          if (as === "image") { l.setAttribute("fetchpriority", "high"); }
+          document.head.appendChild(l);
+        }
+        preload("loader/logo_" + window.__loaderLang + ".webp?a=2f22de869e", "image");
+        if (ko) { preload("loader/jua.woff2?a=2f22de869e", "font", "font/woff2"); }
+      })();
+    </script>
     <style>
+      @font-face {
+        font-family: "LoaderFredoka";
+        src: url("loader/fredoka.woff2?a=2f22de869e") format("woff2");
+        font-display: block;
+      }
+      @font-face {
+        font-family: "LoaderJua";
+        src: url("loader/jua.woff2?a=2f22de869e") format("woff2");
+        font-display: block;
+      }
+
+      :root {
+        /* Average sky colour of loading_bg (make_loader_assets.py) — painted before any image arrives. */
+        --sky: #53d7fd;
+        /* 1 reference unit of the game's 1080x1920 canvas (match width). JS keeps it exact. */
+        --u: calc(min(100vw, 56.25vh) / 1080);
+      }
+
       html, body {
         margin: 0;
         padding: 0;
         width: 100%;
         height: 100%;
-        background: #FFF6E5;
+        background: var(--sky);
         overflow: hidden;
         /* Disable browser gestures (scroll, pull-to-refresh, double-tap zoom) so touches go to the game. */
         overscroll-behavior: none;
@@ -33,7 +79,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #FFF6E5;
+        background: var(--sky);
       }
 
       /* Full viewport on a portrait phone. On wide (desktop/landscape) screens the script
@@ -42,57 +88,144 @@
         display: block;
         width: 100%;
         height: 100%;
-        background: #FFF6E5;
+        background: transparent;
         touch-action: none;
         outline: none;
       }
 
+      /* ---- loader (mirror of the in-game loading screen) ---- */
       #unity-loading {
         position: fixed;
         inset: 0;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #FFF6E5;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
-        color: #5A4632;
-        text-align: center;
+        background: var(--sky);
         z-index: 10;
-        transition: opacity 0.3s ease;
+        opacity: 1;
+        transition: opacity 0.25s ease-out;
       }
+      #unity-loading.fade { opacity: 0; pointer-events: none; }
 
-      #unity-loading-title {
-        font-size: clamp(26px, 8vw, 40px);
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        margin: 0 24px 28px;
-      }
-
-      #unity-loading-track {
-        width: min(70vw, 360px);
-        height: 14px;
-        border-radius: 7px;
-        background: #F0E2C6;
-        overflow: hidden;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
-      }
-
-      #unity-loading-fill {
-        width: 0%;
+      /* Same rect as the canvas (fitCanvas sizes both). */
+      #loader-frame {
+        position: relative;
+        flex: none;
+        width: 100%;
         height: 100%;
-        border-radius: 7px;
-        background: #2BB3A3;
-        transition: width 0.15s linear;
+        overflow: hidden;
+        /* Background image: aspect-fill + centred = the game's AspectRatioFitter.EnvelopeParent.
+           Under it a tiny inline blurred copy, so the first paint already looks right. */
+        background:
+          url("loader/bg.webp?a=2f22de869e") center / cover no-repeat,
+          url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAgABIDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQG/8QAKBAAAgIBAwMCBwEAAAAAAAAAAQIDEQAEEiEFMVETkRQiM2Gh0eHw/8QAGAEAAgMAAAAAAAAAAAAAAAAABAYCAwX/xAAkEQABAgQFBQAAAAAAAAAAAAABAAQCAxESExQVUaEiQVKR0f/aAAwDAQACEQMRAD8A6uUyahg0zb2Aq6HbKeiL5F5sqBkDrKu0ixfc19sorIGuQAID3u/cD/DNYPJNtREKJRybiMk2lR8RGOB0/TUPK3hiH6x09XYGCSwSPpN+sMA1Zt4xeijMm63HHxa3jXSaZJH3S+mPmPgXf8xEkGoZ7jKoGB5I4HIPH59sdptZDMhEZUBeKBsZMk6gMSRxycAwoD1dk1C22gCWY2vlFY+d3fDMh1um3G9bADfbxhkMZtvwVTWWv//Z") center / cover no-repeat,
+          var(--sky);
+      }
+
+      /* Title Logo: anchors x 0.06-0.94, y 0.715-0.975 (from bottom), preserveAspect. */
+      #loader-logo {
+        position: absolute;
+        left: 6%;
+        top: 2.5%;
+        width: 88%;
+        height: 26%;
+        object-fit: contain;
+        object-position: center;
+        -webkit-user-drag: none;
+      }
+
+      /* TMP text look: white face + black outline (stroke layer drawn behind the face). */
+      .outlined {
+        position: absolute;
+        left: 0;
+        right: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-family: "LoaderFredoka", "LoaderJua", "Arial Rounded MT Bold", sans-serif;
+        white-space: nowrap;
+        line-height: 1;
+        isolation: isolate;
+      }
+      .outlined::before {
+        content: attr(data-text);
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+        -webkit-text-stroke: var(--stroke) #000;
+        z-index: -1;
+      }
+
+      /* Loading Text: bottom-stretched, y=170, h=100, size 62, UpperCase, middle-centre. */
+      #loader-text {
+        bottom: calc(170 * var(--u));
+        height: calc(100 * var(--u));
+        font-size: calc(62 * var(--u));
+        text-transform: uppercase;
+        --stroke: calc(62 * var(--u) * 0.2);
+      }
+
+      /* Fillbar: centred, y=90, 365x100; track (core_universal_back, tint #3C3C3C) 51.7 high,
+         fill (fill_bar_front, 9-sliced, clipped by a horizontal Filled mask) 49.8 high. */
+      #loader-bar {
+        position: absolute;
+        left: 50%;
+        bottom: calc(90 * var(--u));
+        width: calc(365 * var(--u));
+        height: calc(100 * var(--u));
+        transform: translateX(-50%);
+      }
+      #loader-track {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: calc(51.7 * var(--u));
+        transform: translateY(-50%);
+        border-radius: calc(25.85 * var(--u));
+        background: #3c3c3c;
+      }
+      #loader-fill {
+        --k: calc(49.8 * var(--u) / 802);  /* Unity shrinks the 397+405 px slices to fit 49.8 */
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: calc(49.8 * var(--u));
+        transform: translateY(-50%);
+        box-sizing: border-box;
+        border-style: solid;
+        border-width: calc(397 * var(--k)) calc(347 * var(--k)) calc(405 * var(--k)) calc(347 * var(--k));
+        border-image: url("loader/bar_fill.png?a=2f22de869e") 99.25 86.75 101.25 86.75 fill / 1 / 0 stretch;
+        clip-path: inset(0 100% 0 0);
+        transition: clip-path 0.15s linear;
+      }
+      #unity-loading-pct {
+        top: 50%;
+        height: calc(45 * var(--u));
+        transform: translateY(-50%);
+        font-size: calc(28 * var(--u));
+        --stroke: calc(28 * var(--u) * 0.18);
       }
 
       #unity-loading-status {
-        margin-top: 12px;
-        font-size: 14px;
-        opacity: 0.75;
-        min-height: 1.4em;
-        padding: 0 24px;
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: calc(20 * var(--u));
+        margin: 0;
+        color: #fff;
+        font: 600 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-align: center;
+        text-shadow: 0 1px 2px #000;
+        white-space: pre-wrap;
       }
+      #unity-loading-status:empty { display: none; }
 
       /* Portrait-only game: ask phone users to rotate back. */
       #rotate-hint {
@@ -100,9 +233,10 @@
         position: fixed;
         inset: 0;
         z-index: 20;
-        background: #FFF6E5;
-        color: #5A4632;
+        background: var(--sky);
+        color: #fff;
         font: 600 18px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
         align-items: center;
         justify-content: center;
         text-align: center;
@@ -119,18 +253,39 @@
     </div>
 
     <div id="unity-loading">
-      <div id="unity-loading-title">Help Me! My Pet!</div>
-      <div id="unity-loading-track"><div id="unity-loading-fill"></div></div>
-      <div id="unity-loading-status">Loading…</div>
+      <div id="loader-frame">
+        <img id="loader-logo" alt="" draggable="false">
+        <p id="loader-text" class="outlined"></p>
+        <div id="loader-bar">
+          <div id="loader-track"></div>
+          <div id="loader-fill"></div>
+          <p id="unity-loading-pct" class="outlined" data-text="0%">0%</p>
+        </div>
+        <p id="unity-loading-status"></p>
+      </div>
     </div>
 
     <div id="rotate-hint">Please rotate your phone to portrait.</div>
 
-    <script src="Build/WebGL.loader.js?v=9ef648d"></script>
+    <script src="Build/WebGL.loader.js?v=b2a986d"></script>
     <script>
+      (function () {
+        var ko = window.__loaderLang === "ko";
+        document.getElementById("loader-logo").src = "loader/logo_" + window.__loaderLang + ".webp?a=2f22de869e";
+        var t = document.getElementById("loader-text");
+        var label = ko ? "로딩 중.." : "Loading..";   // game: loading.loading (ko / en)
+        t.textContent = label;
+        t.setAttribute("data-text", label);
+        if (ko) {
+          document.getElementById("rotate-hint").textContent = "휴대폰을 세로로 돌려 주세요.";
+        }
+      })();
+
       var canvas = document.querySelector("#unity-canvas");
       var loading = document.querySelector("#unity-loading");
-      var loadingFill = document.querySelector("#unity-loading-fill");
+      var loaderFrame = document.querySelector("#loader-frame");
+      var loaderFill = document.querySelector("#loader-fill");
+      var loaderPct = document.querySelector("#unity-loading-pct");
       var loadingStatus = document.querySelector("#unity-loading-status");
 
       // Widest allowed aspect (w/h). Phones in portrait are narrower -> full viewport.
@@ -139,13 +294,20 @@
       function fitCanvas() {
         var w = window.innerWidth;
         var h = window.innerHeight;
+        var cw = w;
         if (w / h > MAX_ASPECT) {
-          canvas.style.width = Math.round(h * MAX_ASPECT) + "px";
+          cw = Math.round(h * MAX_ASPECT);
+          canvas.style.width = cw + "px";
           canvas.style.height = h + "px";
         } else {
           canvas.style.width = "100%";
           canvas.style.height = "100%";
         }
+        // Loader frame = canvas rect; UI unit = the game's CanvasScaler (match width when <= 9:16).
+        loaderFrame.style.width = cw + "px";
+        loaderFrame.style.height = h + "px";
+        var u = (cw / h > MAX_ASPECT) ? h / 1920 : cw / 1080;
+        document.documentElement.style.setProperty("--u", u + "px");
       }
 
       fitCanvas();
@@ -158,11 +320,107 @@
       document.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
       canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
+      var shownPct = -1;
+      function setProgress(pct) {
+        pct = Math.max(shownPct, Math.min(90, Math.round(pct)));   // download = 0-90 %, never backwards
+        if (pct === shownPct) { return; }
+        shownPct = pct;
+        loaderFill.style.clipPath = "inset(0 " + (100 - pct) + "% 0 0)";
+        loaderPct.textContent = pct + "%";
+        loaderPct.setAttribute("data-text", pct + "%");
+      }
+      setProgress(0);
+
+      // Hand-over: fade the HTML copy out once Unity is actually drawing the game's own loading
+      // screen (same picture underneath -> only the bar changes). Detected by sampling the middle
+      // band of the WebGL canvas (background art only); falls back to a timer if it can't be read.
+      var faded = false;
+      function fadeOut(reason) {
+        if (faded) { return; }
+        faded = true;
+        window.__loaderHandover = { reason: reason, t: Math.round(performance.now()) };
+        loading.classList.add("fade");
+        setTimeout(function () { loading.style.display = "none"; }, 300);
+      }
+      function waitForFirstGameFrame() {
+        var ko = window.__loaderLang === "ko";
+        var probe = document.createElement("canvas");
+        probe.width = 96; probe.height = 12;
+        var pctx = probe.getContext("2d", { willReadFrequently: true });
+        var start = performance.now(), artAt = 0, hits = 0;
+        function lumAt(d, i) { return (d[i] * 3 + d[i + 1] * 6 + d[i + 2]) / 10; }
+        // Middle band of the screen = background art only (no logo, no bar).
+        function artVisible() {
+          pctx.clearRect(0, 0, 96, 12);
+          pctx.drawImage(canvas, 0, canvas.height * 0.35, canvas.width, canvas.height * 0.3, 0, 0, 8, 8);
+          var d = pctx.getImageData(0, 0, 8, 8).data, lum = 0, opaque = 0, min = 255, max = 0;
+          for (var i = 0; i < d.length; i += 4) {
+            var l = lumAt(d, i);
+            lum += l;
+            if (d[i + 3] > 200) { opaque++; }
+            if (l < min) { min = l; }
+            if (l > max) { max = l; }
+          }
+          // The loading art is bright and detailed; a clear colour / splash is flat or dark.
+          return opaque > 60 && lum / 64 > 70 && max - min > 25;
+        }
+        // Width of the outlined "Loading.." text (share of screen width). The game first shows its
+        // serialized English "LOADING.." (~0.29) and switches to "로딩 중.." (~0.16) once the
+        // Localization tables are in; for Korean we keep our copy up until that switch.
+        function textWidth() {
+          var cu = canvas.width / 1080;
+          pctx.clearRect(0, 0, 96, 12);
+          pctx.drawImage(canvas, 0, canvas.height - 270 * cu, canvas.width, 100 * cu, 0, 0, 96, 12);
+          var d = pctx.getImageData(0, 0, 96, 12).data, first = -1, last = -1;
+          for (var x = 0; x < 96; x++) {
+            var min = 255, max = 0;
+            for (var y = 0; y < 12; y++) {
+              var l = lumAt(d, (y * 96 + x) * 4);
+              if (l < min) { min = l; }
+              if (l > max) { max = l; }
+            }
+            if (max - min > 90) { if (first < 0) { first = x; } last = x; }
+          }
+          return first < 0 ? 0 : (last - first + 1) / 96;
+        }
+        // Fill of the game's green bar (0-1). Its own loading starts again at 0-10 % and jumps to
+        // 20-90 % once the next scene loads; waiting for >= 85 % keeps the bar from going backwards.
+        function barFill() {
+          var cu = canvas.width / 1080, x0 = canvas.width / 2 - 182.5 * cu;
+          pctx.clearRect(0, 0, 96, 12);
+          pctx.drawImage(canvas, x0, canvas.height - 140 * cu - 2, 365 * cu, 4, 0, 0, 64, 1);
+          var d = pctx.getImageData(0, 0, 64, 1).data, last = -1;
+          for (var x = 0; x < 64; x++) {
+            var i = x * 4;
+            if (d[i + 1] > 140 && d[i + 1] > d[i] + 30 && d[i + 2] < 90) { last = x; }
+          }
+          return (last + 1) / 64;
+        }
+        (function check() {
+          if (faded) { return; }
+          var now = performance.now();
+          if (!artAt && now - start > 4000) { fadeOut("timeout"); return; }
+          try {
+            if (!artAt) {
+              hits = artVisible() ? hits + 1 : 0;
+              if (hits >= 2) { artAt = now; }
+            }
+            if (artAt) {
+              var w = ko ? textWidth() : 1, f = barFill();
+              window.__loaderProbe = { text: w, bar: f };
+              if (f >= 0.85 && (!ko || (w > 0.05 && w < 0.23))) { fadeOut("frame+bar" + (ko ? "+text" : "")); return; }
+              if (now - artAt > 3500) { fadeOut("frame (bar/text timeout)"); return; }
+            }
+          } catch (e) { /* unreadable canvas: rely on the timeout */ }
+          requestAnimationFrame(check);
+        })();
+      }
+
       createUnityInstance(canvas, {
         arguments: [],
-        dataUrl: "Build/WebGL.data.unityweb?v=9ef648d",
-        frameworkUrl: "Build/WebGL.framework.js.unityweb?v=9ef648d",
-        codeUrl: "Build/WebGL.wasm.unityweb?v=9ef648d",
+        dataUrl: "Build/WebGL.data.unityweb?v=b2a986d",
+        frameworkUrl: "Build/WebGL.framework.js.unityweb?v=b2a986d",
+        codeUrl: "Build/WebGL.wasm.unityweb?v=b2a986d",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "rnmsoft",
         productName: "Help Me! My Pet!",
@@ -174,14 +432,13 @@
           if (type === "error") { console.error(msg); } else { console.warn(msg); }
         },
       }, function (progress) {
-        var pct = Math.round(progress * 100);
-        loadingFill.style.width = pct + "%";
-        loadingStatus.textContent = pct < 90 ? "Loading… " + pct + "%" : "Starting…";
+        // Unity reports 0-0.9 while downloading and 1.0 once started; we show at most 90 %.
+        setProgress(progress * 100);
       }).then(function (instance) {
         window.unityInstance = instance;
-        loading.style.opacity = "0";
-        setTimeout(function () { loading.style.display = "none"; }, 300);
         fitCanvas();
+        setProgress(90);
+        waitForFirstGameFrame();
       }).catch(function (message) {
         loadingStatus.textContent = String(message);
         console.error(message);
