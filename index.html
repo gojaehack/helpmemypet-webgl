@@ -10,6 +10,12 @@
     <meta name="apple-mobile-web-app-title" content="Help Me! My Pet!">
     <meta name="theme-color" content="#53d7fd">
     <title>Help Me! My Pet!</title>
+    <!-- App icon (v2 vet + Baektul). Files live in loader/ so the ?a= content hash cache-busts them.
+         apple-mobile-web-app-title stays English: a static meta can't follow navigator.language. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="loader/favicon-32.png?a=7731ee7012">
+    <link rel="icon" type="image/png" sizes="16x16" href="loader/favicon-16.png?a=7731ee7012">
+    <link rel="apple-touch-icon" sizes="180x180" href="loader/apple-touch-icon.png?a=7731ee7012">
+    <link rel="manifest" href="loader/manifest.webmanifest?a=7731ee7012">
     <!--
       HTML loader = a copy of the game's own loading screen (Loading Graphics.prefab, 1080x1920
       reference, CanvasScaler matched to width) so the hand-over to Unity is invisible:
@@ -17,8 +23,8 @@
       Assets in loader/ are exported by tools/make_loader_assets.py; redeploy.sh replaces the
       ?a= token with a hash of loader/ (cache-bust separate from the four Build/WebGL.* refs).
     -->
-    <link rel="preload" as="image" href="loader/bg.webp?a=2f22de869e" fetchpriority="high">
-    <link rel="preload" as="font" type="font/woff2" href="loader/fredoka.woff2?a=2f22de869e" crossorigin>
+    <link rel="preload" as="image" href="loader/bg.webp?a=7731ee7012" fetchpriority="high">
+    <link rel="preload" as="font" type="font/woff2" href="loader/fredoka.woff2?a=7731ee7012" crossorigin>
     <script>
       // Same language rule as the game's first start (system language): ko* -> Korean, else English.
       // (The game also remembers a language picked in Settings in PlayerPrefs; JS can't read that.)
@@ -34,19 +40,19 @@
           if (as === "image") { l.setAttribute("fetchpriority", "high"); }
           document.head.appendChild(l);
         }
-        preload("loader/logo_" + window.__loaderLang + ".webp?a=2f22de869e", "image");
-        if (ko) { preload("loader/jua.woff2?a=2f22de869e", "font", "font/woff2"); }
+        preload("loader/logo_" + window.__loaderLang + ".webp?a=7731ee7012", "image");
+        if (ko) { preload("loader/jua.woff2?a=7731ee7012", "font", "font/woff2"); }
       })();
     </script>
     <style>
       @font-face {
         font-family: "LoaderFredoka";
-        src: url("loader/fredoka.woff2?a=2f22de869e") format("woff2");
+        src: url("loader/fredoka.woff2?a=7731ee7012") format("woff2");
         font-display: block;
       }
       @font-face {
         font-family: "LoaderJua";
-        src: url("loader/jua.woff2?a=2f22de869e") format("woff2");
+        src: url("loader/jua.woff2?a=7731ee7012") format("woff2");
         font-display: block;
       }
 
@@ -117,7 +123,7 @@
         /* Background image: aspect-fill + centred = the game's AspectRatioFitter.EnvelopeParent.
            Under it a tiny inline blurred copy, so the first paint already looks right. */
         background:
-          url("loader/bg.webp?a=2f22de869e") center / cover no-repeat,
+          url("loader/bg.webp?a=7731ee7012") center / cover no-repeat,
           url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAgABIDASIAAhEBAxEB/8QAGQAAAgMBAAAAAAAAAAAAAAAAAAMBAgQG/8QAKBAAAgIBAwMCBwEAAAAAAAAAAQIDEQAEEiEFMVETkRQiM2Gh0eHw/8QAGAEAAgMAAAAAAAAAAAAAAAAABAYCAwX/xAAkEQABAgQFBQAAAAAAAAAAAAABAAQCAxESExQVUaEiQVKR0f/aAAwDAQACEQMRAD8A6uUyahg0zb2Aq6HbKeiL5F5sqBkDrKu0ixfc19sorIGuQAID3u/cD/DNYPJNtREKJRybiMk2lR8RGOB0/TUPK3hiH6x09XYGCSwSPpN+sMA1Zt4xeijMm63HHxa3jXSaZJH3S+mPmPgXf8xEkGoZ7jKoGB5I4HIPH59sdptZDMhEZUBeKBsZMk6gMSRxycAwoD1dk1C22gCWY2vlFY+d3fDMh1um3G9bADfbxhkMZtvwVTWWv//Z") center / cover no-repeat,
           var(--sky);
       }
@@ -201,7 +207,7 @@
         box-sizing: border-box;
         border-style: solid;
         border-width: calc(397 * var(--k)) calc(347 * var(--k)) calc(405 * var(--k)) calc(347 * var(--k));
-        border-image: url("loader/bar_fill.png?a=2f22de869e") 99.25 86.75 101.25 86.75 fill / 1 / 0 stretch;
+        border-image: url("loader/bar_fill.png?a=7731ee7012") 99.25 86.75 101.25 86.75 fill / 1 / 0 stretch;
         clip-path: inset(0 100% 0 0);
         transition: clip-path 0.15s linear;
       }
@@ -289,11 +295,11 @@
 
     <div id="rotate-hint">Please rotate your phone to portrait.</div>
 
-    <script src="Build/WebGL.loader.js?v=336b9ac"></script>
+    <script src="Build/WebGL.loader.js?v=0df03e4"></script>
     <script>
       (function () {
         var ko = window.__loaderLang === "ko";
-        document.getElementById("loader-logo").src = "loader/logo_" + window.__loaderLang + ".webp?a=2f22de869e";
+        document.getElementById("loader-logo").src = "loader/logo_" + window.__loaderLang + ".webp?a=7731ee7012";
         var t = document.getElementById("loader-text");
         var label = ko ? "로딩 중.." : "Loading..";   // game: loading.loading (ko / en)
         t.textContent = label;
@@ -583,9 +589,9 @@
       maybeResetSaveData().then(function () {
         createUnityInstance(canvas, {
           arguments: [],
-          dataUrl: "Build/WebGL.data.unityweb?v=336b9ac",
-          frameworkUrl: "Build/WebGL.framework.js.unityweb?v=336b9ac",
-          codeUrl: "Build/WebGL.wasm.unityweb?v=336b9ac",
+          dataUrl: "Build/WebGL.data.unityweb?v=0df03e4",
+          frameworkUrl: "Build/WebGL.framework.js.unityweb?v=0df03e4",
+          codeUrl: "Build/WebGL.wasm.unityweb?v=0df03e4",
           streamingAssetsUrl: "StreamingAssets",
           companyName: "rnmsoft",
           productName: "Help Me! My Pet!",
